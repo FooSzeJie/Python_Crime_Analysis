@@ -1,13 +1,13 @@
-import numpy as np # linear algebra
-import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
-import re  
-import seaborn as sns
-import matplotlib.pyplot as plt 
-import plotly.graph_objects as go
-import plotly.express as px
-import plotly.io as pio
-import json
-from urllib.request import urlopen
+import numpy as np  # Import NumPy for numerical operations and linear algebra functionalities.  
+import pandas as pd  # Import Pandas for data manipulation and analysis, specifically for handling CSV file input/output (e.g., pd.read_csv).  
+import re  # Import the re module for regular expression operations, useful for string matching and manipulation.  
+import seaborn as sns  # Import Seaborn for statistical data visualization based on Matplotlib.  
+import matplotlib.pyplot as plt  # Import Matplotlib's pyplot for creating static, interactive, and animated visualizations in Python.  
+import plotly.graph_objects as go  # Import Plotly's graph_objects for creating interactive visualizations and figures.  
+import plotly.express as px  # Import Plotly Express for simplified syntax for creating complex plots quickly.  
+import plotly.io as pio  # Import Plotly's I/O module for configuring default rendering and saving options.  
+import json  # Import the json module for parsing JSON data and handling JSON-encoded data.  
+from urllib.request import urlopen  # Import urlopen from urllib.request for fetching data from URLs.
 
 class Crime: 
 
@@ -37,7 +37,7 @@ class Crime:
             return
         return self.df
 
-    def ShowCrimeBarInYear(self, year):
+    def showCrimeBarInYear(self, year):
         if self.df.empty:
             print("DataFrame is empty. Cannot display the chart.")
             return
@@ -49,7 +49,7 @@ class Crime:
             df17 = df.loc[(df.Year == year)] # We only want 2017 
             df17 = df17.reset_index(drop=True) # Resetting the Index 
 
-            fig = px.bar(df17.iloc[1:], x='State', y='Total', hover_data=['Violent crime', 'Property crime'], width = 1000, color='Total',title=f"Table 1: Total Cases throughout each state in Malaysia in {year}")
+            fig = px.bar(df17.iloc[1:], x='State', y='Total', hover_data=['Violent crime', 'Property crime'], width = 1000, color='Total',title=f"Total Cases throughout each state in Malaysia in {year}")
 
             # Show the Chart
             fig.show()
@@ -113,21 +113,27 @@ class Crime:
                 x='Change (%)',  
                 y='State',  
                 title=f'Percentage Change in Total Crimes from {year1} to {year2}',  
-                labels={'Change (%)': 'Percentage Change', 'State': 'State'}  
+                labels={'Change (%)': 'Percentage Change', 'State': 'State'},  
+                text='Change (%)'  # Display values on bars  
             )  
             fig2.update_layout(  
                 xaxis_title='Percentage Change',  
                 yaxis_title='State',  
-                title=f'Percentage Change in Total Crimes ({year1} vs {year2})'  
+                title=f'Percentage Change in Total Crimes ({year1} vs {year2})',  
+                height=650,  # Increased height for better visibility  
+                bargap=0.12  # Set the gap between bars  
             )  
-    
+            
+            # Update hover information to have a solid background and more visibility  
+            fig2.update_traces(hovertemplate='Change: %{x:.2f}%<br>State: %{y}<extra></extra>',   
+                               hoverlabel=dict(bgcolor='white', font_color='black'))  # Setting hover label properties  
+            
             # Display the charts  
             fig.show()  
             fig2.show()  
             
         except Exception as e:  
             return f"An error occurred while comparing crime data: {e}"
-                
 
     def compareCrimeTypes(self, year1, year2=None, year3=None):  
         valid_years = [2017, 2018, 2019]  
@@ -221,7 +227,7 @@ class Crime:
             df_crime = self.df_crime.copy()
 
             fig2 = px.bar(df_crime.iloc[3:] , x='State', y='Crime index ratio', hover_data=['Crime Index', 'Population',"Year"],width= 900, 
-                color='Crime Index',title="Table 2 : Crime Index Ratio throughout 2017-2019")
+                color='Crime Index',title="Crime Index Ratio throughout 2017-2019")
 
             # Show the Chart
             fig2.show()
@@ -256,35 +262,34 @@ class Crime:
         except Exception as e:
             print(f"An error occurred while processing the crime radio index year table: {e}")
             return pd.DataFrame()
-
+            
     def showCrimePopulationCorrelation(self, year):  
         try:  
             # Check if the crime DataFrame is empty  
             if self.df_crime.empty:  
-                print("Crime index DataFrame is empty. Cannot perform correlation analysis.")  
-                return  
+                return "Crime index DataFrame is empty. Cannot perform correlation analysis."  
             
             # Filter out the row for "Malaysia" and select the specified year  
             df_filtered = self.df_crime[(self.df_crime['State'] != 'Malaysia') & (self.df_crime['Year'] == year)]  
             
-            # Print DataFrame columns for debugging  
-            print("Filtered DataFrame columns:")  
-            print(df_filtered.columns)  
-            
             # Define the correlation columns  
             correlation_columns = ['Crime index ratio', 'Population']  
-
+    
             # Verify these columns are in the DataFrame  
             for col in correlation_columns:  
                 if col not in df_filtered.columns:  
-                    print(f"Column '{col}' is not in the DataFrame. Available columns are: {df_filtered.columns}")  
-                    return  
+                    return f"Column '{col}' is not in the DataFrame. Available columns are: {df_filtered.columns}"  
+            
+            # Display the filtered DataFrame with relevant columns including State and reset the index  
+            df_display = df_filtered[['State'] + correlation_columns].reset_index(drop=True)  # Reset index  
+            display(df_display)  # Show State along with correlation columns  
             
             # Calculate the correlation matrix  
             correlation_matrix = df_filtered[correlation_columns].corr()  
-            print("Correlation Matrix:")  
-            print(correlation_matrix)  
             
+            # Display the correlation matrix as a DataFrame  
+            display(correlation_matrix)   
+    
             # Plotting the correlation  
             plt.figure(figsize=(10, 6))  
             sns.scatterplot(data=df_filtered, x='Population', y='Crime index ratio', hue='State', palette='viridis')  
@@ -295,7 +300,7 @@ class Crime:
             plt.show()  
             
         except Exception as e:  
-            print(f"An error occurred while performing correlation analysis: {e}") 
+            return f"An error occurred while performing correlation analysis: {e}"
 
 
     def showCrimeRadioIndexYearMap(self, year):
@@ -330,7 +335,7 @@ class Crime:
                 color="Crime index ratio",
                 hover_name="State",
                 hover_data=["Crime Index","Population"],
-                title=f"Table 4 :Crime Index Ratio throughout Malaysia in {year}")
+                title=f"Crime Index Ratio throughout Malaysia in {year}")
             fig.update_geos(fitbounds="locations", visible=False)
             fig.show()
         except Exception as e:
@@ -507,90 +512,102 @@ class Crime:
         
         # Show the pie chart  
         fig.show()   
-
+    
     def analyzeViolentCrimeStatistics(self, state, year):  
-            """  
-            Analyze crime statistics for the given state and year,  
-            calculating the min, max, and mean total cases, excluding the state total.  
-            """  
-            df_state_year = self.showCrimeActivity(state, year)  
-            
-            if df_state_year.empty:  
-                return None  # No data available for the specified state and year  
-            
-            # Extract the state name dynamically from the sheet name  
-            state_name = re.sub(r'1\.5', '', state)  
-            
-            # Prepare results for statistical analysis while excluding the total for the state  
-            results_df = pd.DataFrame({  
-                'Area': df_state_year['Contingent/ PDRM District'],  
-                'Total Cases': df_state_year['Total']  
-            })  
-            
-            # Filter out the total for the specific state  
-            results_df = results_df[results_df['Area'] != state_name]  
-            results_df.reset_index(drop=True, inplace=True)  
-            
-            # Calculate statistics  
-            min_cases = int(results_df['Total Cases'].min())  # Convert to integer  
-            max_cases = int(results_df['Total Cases'].max())  # Convert to integer  
-            mean_cases = int(results_df['Total Cases'].mean())  # Convert mean to int  
+        """  
+        Analyze crime statistics for the given state and year,  
+        calculating the min, max, mean, median, and standard deviation of total cases, excluding the state total.  
+        """  
+        df_state_year = self.showCrimeActivity(state, year)  
         
-            # Get the area with the most crime  
-            area_max_crime = results_df.loc[results_df['Total Cases'].idxmax(), 'Area']  
+        if df_state_year.empty:  
+            return None  # No data available for the specified state and year  
         
-            # Create a DataFrame for statistics, ensuring 'Value' is treated as integers  
-            stats_df = pd.DataFrame({  
-                'Statistic': ['Minimum Cases', 'Maximum Cases', 'Mean Cases'],  
-                'Value': [min_cases, max_cases, mean_cases],  # Assign integer values directly  
-                'Area': [None, area_max_crime, None]  
-            })  
+        # Extract the state name dynamically from the sheet name  
+        state_name = re.sub(r'1\.5', '', state)  
         
-            # Convert the 'Value' column to integers explicitly  
-            stats_df['Value'] = stats_df['Value'].astype(int)  
-            
-            # Display the statistics DataFrame in Jupyter Notebook  
-            display(stats_df)  
+        # Prepare results for statistical analysis while excluding the total for the state  
+        results_df = pd.DataFrame({  
+            'Area': df_state_year['Contingent/ PDRM District'],  
+            'Total Cases': df_state_year['Total']  
+        })  
         
-            # Plotting the statistics  
-            plt.figure(figsize=(10, 5))  
-            bars = plt.bar(stats_df['Statistic'], stats_df['Value'], color=['skyblue', 'salmon', 'lightgreen'])  
-            plt.title(f'Crime Statistics for {state_name} in {year}')  
-            plt.ylabel('Number of Cases')  
-            plt.xticks(rotation=45)  
-            plt.grid(axis='y', linestyle='--', alpha=0.7)  
+        # Filter out the total for the specific state  
+        results_df = results_df[results_df['Area'] != state_name]  
+        results_df.reset_index(drop=True, inplace=True)  
         
-            # Adding exact values on top of the bars  
-            for bar in bars:  
-                yval = bar.get_height()  
-                plt.text(bar.get_x() + bar.get_width()/2, yval, int(yval), ha='center', va='bottom')  # va='bottom' ensures text is above the bar  
-            
-            plt.show()  
+        # Calculate statistics  
+        min_cases = int(results_df['Total Cases'].min())  # Convert to integer  
+        max_cases = int(results_df['Total Cases'].max())  # Convert to integer  
+        mean_cases = int(results_df['Total Cases'].mean())  # Convert mean to int  
+        median_cases = int(results_df['Total Cases'].median())  # Calculate median and convert to int  
+        std_dev_cases = results_df['Total Cases'].std()  # Standard deviation (no need to convert to int as it can be float)  
+    
+        # Get the area with the most and least crime  
+        area_max_crime = results_df.loc[results_df['Total Cases'].idxmax(), 'Area']  
+        area_min_crime = results_df.loc[results_df['Total Cases'].idxmin(), 'Area']  
+        
+        # Create a DataFrame for statistics  
+        stats_df = pd.DataFrame({  
+            'Statistic': ['Minimum Cases', 'Maximum Cases', 'Mean Cases', 'Median Cases', 'Standard Deviation'],  
+            'Value': [min_cases, max_cases, mean_cases, median_cases, std_dev_cases],  
+            'Area': [area_min_crime, area_max_crime, None, None, None]  
+        })  
+        
+        # Convert the 'Value' column to integers explicitly, except for standard deviation  
+        stats_df['Value'] = stats_df['Value'].astype(object)  # Make sure to allow float values (for std deviation)  
+        
+        # Display the statistics DataFrame in Jupyter Notebook  
+        display(stats_df)  
+        
+        # Plotting the statistics  
+        plt.figure(figsize=(10, 5))  
+        bars = plt.bar(stats_df['Statistic'], stats_df['Value'].astype(float), color=['skyblue', 'salmon', 'lightgreen', 'lightcoral', 'lightyellow'])  
+        plt.title(f'Crime Statistics for {state_name} in {year}')  
+        plt.ylabel('Number of Cases')  
+        plt.xticks(rotation=45)  
+        plt.grid(axis='y', linestyle='--', alpha=0.7)  
+        
+        # Adding exact values and areas on top of the bars  
+        for bar, area in zip(bars, stats_df['Area']):  
+            yval = bar.get_height()  
+            if area is not None:  
+                plt.text(bar.get_x() + bar.get_width()/2, yval, f"{int(yval)} ({area})", ha='center', va='bottom')  # Include area name  
+            else:  
+                plt.text(bar.get_x() + bar.get_width()/2, yval, int(yval), ha='center', va='bottom')  # Only value for mean, median, std deviation  
+    
+        plt.show()  
+        
   #------------------ Sheet 1.7 -------------------------    
-    def showCrimeActivityBar(self, state, year, area):
-        try:
-            # Read the dataset based on the sheet name
-            df_state = pd.DataFrame(pd.read_excel("Bab 1 - Jenayah indeks 2020 v1.xlsx", sheet_name=state))
-
-            df_state.columns = df_state.columns.str.strip()
-            df_state = df_state.replace("-", 0)
-            df_state_year = df_state[df_state['Year'] == year].reset_index(drop=True)
-            df_state_year = df_state_year.drop("Year", axis=1)
-
-            # Retrieve the area name using the provided index
-            area_name = df_state_year.iloc[area, 0]  # Assuming the area name is in the first column
-
-            df_state_year_wm = df_state_year.iloc[area]
-            df_state_year_wm = pd.DataFrame(df_state_year_wm)
-            df_state_year_wm2 = df_state_year_wm.iloc[2:].reset_index()
-
-            df_state_year_wm2.rename(columns={5: "Total", "index": "Cases"}, inplace=True)
-            fig = px.treemap(df_state_year_wm2, values=df_state_year_wm2.columns[1], path=["Cases"], width=600, height=700, title=f"Table 3 : The Amount of cases in {area_name}", color_discrete_sequence=px.colors.sequential.RdBu)
-
-            # Show the Chart
-            fig.show()
-        except Exception as e:
-            print(f"An error occurred while creating the treemap chart: {e}")
+    def showCrimeActivityBar(self, state, year, area):  
+        try:  
+            # Read the dataset based on the sheet name  
+            df_state = pd.DataFrame(pd.read_excel("Bab 1 - Jenayah indeks 2020 v1.xlsx", sheet_name=state))  
+    
+            df_state.columns = df_state.columns.str.strip()  
+            df_state = df_state.replace("-", 0)  
+            df_state_year = df_state[df_state['Year'] == year].reset_index(drop=True)  
+            df_state_year = df_state_year.drop("Year", axis=1)  
+    
+            # Retrieve the area name using the provided index  
+            area_name = df_state_year.iloc[area, 0]  
+    
+            df_state_year_wm = df_state_year.iloc[area]  
+            df_state_year_wm = pd.DataFrame(df_state_year_wm)  
+            df_state_year_wm2 = df_state_year_wm.iloc[2:].reset_index()  
+    
+            df_state_year_wm2.rename(columns={5: "Total", "index": "Cases"}, inplace=True)  
+    
+            # Display the DataFrame with case statistics  
+            display(df_state_year_wm2)  # Show the DataFrame in Jupyter Notebook  
+            
+            # Create the treemap chart  
+            fig = px.treemap(df_state_year_wm2, values=df_state_year_wm2.columns[1], path=["Cases"], width=800, height=500, title=f"The Amount of cases in {area_name}", color_discrete_sequence=px.colors.sequential.RdBu)  
+    
+            # Show the Chart  
+            fig.show()  
+        except Exception as e:  
+            display(f"An error occurred while creating the treemap chart: {e}")  
 
 
 
